@@ -23,7 +23,7 @@ const Menu = (props: MenuProps): JSX.Element => {
         <a href="/">Home</a>
         <a href="/movies">Movies</a>
         <a href={`/perfil/${props.id}`}>Perfil</a>
-        <a href="/find">Pesquisar</a>
+        {/* <a href="/find">Pesquisar</a> */}
         <SingOutButton onClick={() => props.singOut()}>Sair</SingOutButton>
       </MenuItens>
     </MenuContainer>

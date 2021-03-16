@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import br.jraphael.api.DTOs.ListMoviesDTO;
 import br.jraphael.api.DTOs.form.ListMovieUpdateForm;
 import br.jraphael.api.DTOs.form.ListMoviesCreateForm;
 import br.jraphael.api.models.ListMovies;
@@ -28,7 +29,7 @@ public class ListMoviesService {
   @Autowired
   MovieRepository movieRepository;
 
-  public ResponseEntity<ListMovies> create(ListMoviesCreateForm form) {
+  public ResponseEntity<ListMoviesDTO> create(ListMoviesCreateForm form) {
     Optional<User> user = userRepository.findById(form.getUser_id());
     Optional<Movie> movie = movieRepository.findById(form.getMovie_id());
 
@@ -36,18 +37,17 @@ public class ListMoviesService {
       return ResponseEntity.badRequest().build();
 
     ListMovies listMovies = listMoviesRepository.save(form.convert(user.get(), movie.get()));
-    return ResponseEntity.ok().body(listMovies);
+    return ResponseEntity.ok().body(new ListMoviesDTO(listMovies));
   }
 
-  public ResponseEntity<List<ListMovies>> get(String id) {
-    // List<ListMovies> listMovies = listMoviesRepository.findByUserId(id);
-    // return ResponseEntity.ok().body(listMovies);
-    return null;
+  public ResponseEntity<List<ListMoviesDTO>> get(String id) {
+    List<ListMovies> listMovies = listMoviesRepository.findByUserId(id);
+    List<ListMoviesDTO> listMoviesDTO = new ListMoviesDTO().convertListListMoviesToDTOs(listMovies);
+    return ResponseEntity.ok().body(listMoviesDTO);
   }
 
   public ResponseEntity<String> delete(String id) {
-    if (listMoviesRepository.findById(id).isPresent())
-    {
+    if (listMoviesRepository.findById(id).isPresent()) {
       listMoviesRepository.deleteById(id);
       return ResponseEntity.ok().body("Comment successfully deleted.");
     }
@@ -57,13 +57,12 @@ public class ListMoviesService {
 
   public ResponseEntity<ListMovies> update(String id, ListMovieUpdateForm form) {
     Optional<ListMovies> movies = listMoviesRepository.findById(id);
-    if (movies.isPresent())
-    {
+    if (movies.isPresent()) {
       ListMovies listMovies = form.convertToListMovies(movies.get());
       return ResponseEntity.ok().body(listMoviesRepository.save(listMovies));
     }
 
     return ResponseEntity.badRequest().build();
   }
-  
+
 }

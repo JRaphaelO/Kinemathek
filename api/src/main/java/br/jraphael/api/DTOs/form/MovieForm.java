@@ -12,7 +12,6 @@ public class MovieForm {
   private long classification;
   private String imageUrl;
   private String trailerUrl;
-
   private String category;
 
   public String getTitle() {

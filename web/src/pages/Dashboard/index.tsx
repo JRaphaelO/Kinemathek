@@ -1,33 +1,55 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
+  BackButton,
   DashboardContainer,
   DashboardHome,
   DashboardHomeContainer,
   DashboardHomeContainerTable,
+  DashboardHomeContainerTitle,
+  ShowCommentMovie,
+  ShowDetailsMovie,
+  ShowTrailerMovie,
+  UnfollowMovie,
 } from './styles';
 import MenuContainer from '../../components/Menu';
 import { userAuth } from '../../hooks/auth';
 import api from '../../services/api';
+import ReactPlayer from 'react-player';
+import { BiArrowBack } from 'react-icons/bi';
+import { AiFillHeart } from 'react-icons/ai';
 
-interface User {
+interface Movie {
   id: string;
-  username: string;
-  name: string;
-  email: string;
-  description: string;
-  age: number;
+  title: string;
+  sinopse: string;
+  year: string;
+  classification: string;
+  imageUrl: string;
+  trailerUrl: string;
+  category: string;
+  created_data: string;
+  updated_data: string;
+}
+
+interface MovieDetails {
+  id: string;
+  comment: string;
+  note: number;
+  movie: Movie;
 }
 
 const Dashboard: React.FC = () => {
   const { signOut, user } = userAuth();
   const [data, setData] = useState([]);
+  const [display, setDisplay] = useState(true);
   const [key, setKey] = useState(false);
+  const [selectedMovie, setSelecetdMovie] = useState<MovieDetails>();
 
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
     async function LoadUsers() {
       try {
-        await api.get('/user').then(response => {
+        await api.get(`/listMovies/${user.id}`).then(response => {
           setData(response.data);
           console.log(response.data);
         });
@@ -41,52 +63,93 @@ const Dashboard: React.FC = () => {
 
   const renderRows = (): any => {
     return data !== null
-      ? data.map((user: User) => (
-          <tr key={user.id}>
-            <td>{user.username}</td>
-            <td>{user.name}</td>
-            <td>{user.email}</td>
-            <td>{user.description}</td>
+      ? data.map((movieDetails: MovieDetails) => (
+          <tr
+            key={movieDetails.id}
+            onClick={(): void => {
+              setSelecetdMovie(movieDetails);
+              setDisplay(false);
+            }}
+          >
+            <td>{movieDetails.movie.title}</td>
+            <td>{movieDetails.comment}</td>
+            <td>{movieDetails.note}</td>
           </tr>
         ))
       : null;
   };
+
+  const handleUnfollow = useCallback(async () => {
+    try {
+      const response = await api.delete(`/listMovies/${selectedMovie?.id}`);
+      if (response.status === 200) {
+        alert('Comentário excluido com sucesso!');
+        setDisplay(true);
+        setKey(!key);
+      }
+    } catch (err) {
+      console.log(err.message);
+      alert(err.message);
+    }
+  }, [selectedMovie]);
 
   return (
     <DashboardContainer>
       <MenuContainer singOut={signOut} id={user.id} />
       <DashboardHome>
         <DashboardHomeContainer>
-          <div>
-            <h1>{user.username}</h1>
-          </div>
+          <DashboardHomeContainerTitle>
+            <div>
+              <h1>{user.username}</h1>
+            </div>
+            <div>
+              <UnfollowMovie display={!display} onClick={handleUnfollow}>
+                <AiFillHeart />
+              </UnfollowMovie>
+              <BackButton display={!display} onClick={() => setDisplay(true)}>
+                <BiArrowBack />
+              </BackButton>
+            </div>
+          </DashboardHomeContainerTitle>
+
           <hr />
-          <DashboardHomeContainerTable>
+          <DashboardHomeContainerTable display={display}>
             <table>
               <thead>
                 <tr>
-                  <th>Username</th>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>description</th>
+                  <th>Filme</th>
+                  <th>Comentário</th>
+                  <th>Nota</th>
                 </tr>
               </thead>
               <tbody>{renderRows()}</tbody>
             </table>
           </DashboardHomeContainerTable>
+          <ShowDetailsMovie display={!display}>
+            <ShowTrailerMovie>
+              <ReactPlayer url={selectedMovie?.movie.trailerUrl} />
+            </ShowTrailerMovie>
+            {/* <img
+              src={selectedMovie?.movie.imageUrl}
+              alt={selectedMovie?.movie.title}
+            /> */}
+            <h1>
+              <>
+                {selectedMovie?.movie.title} ({selectedMovie?.movie.year})
+              </>
+              <strong>PG - {selectedMovie?.movie.classification} </strong>
+            </h1>
+            <p> {selectedMovie?.movie.sinopse}. </p>
+            <ShowCommentMovie>
+              <strong> Comentário: </strong>
+              <strong> Nota: {selectedMovie?.note} </strong>
+            </ShowCommentMovie>
+            <p> {selectedMovie?.comment} </p>
+          </ShowDetailsMovie>
         </DashboardHomeContainer>
       </DashboardHome>
     </DashboardContainer>
   );
 };
-
-// private String id;
-// private String title;
-// private String sinopse;
-// private String year;
-// private long classification;
-// private String imageUrl;
-// private String trailerUrl;
-// private String category;
 
 export default Dashboard;
